@@ -103,7 +103,9 @@ def main():
     (DATA / "cards.json").write_text(cards_txt, encoding="utf-8")
     (DATA / "extras.json").write_text(extras_txt, encoding="utf-8")
 
-    digest = hashlib.sha1((cards_txt + extras_txt).encode("utf-8")).hexdigest()[:10]
+    # 게임 코드(index.html, sw.js)도 버전에 포함 → 화면 코드만 바꿔도 앱에 "새 업데이트"가 뜸
+    code = "".join((ROOT / f).read_text(encoding="utf-8") for f in ("index.html", "sw.js") if (ROOT / f).exists())
+    digest = hashlib.sha1((cards_txt + extras_txt + code).encode("utf-8")).hexdigest()[:10]
     version = {"version": digest, "builtAt": datetime.now(KST).strftime("%Y-%m-%d %H:%M"),
                "cards": len(pool), "scenes": len({c["k"].rsplit("_L", 1)[0] for c in pool})}
     (DATA / "version.json").write_text(json.dumps(version, ensure_ascii=False), encoding="utf-8")
