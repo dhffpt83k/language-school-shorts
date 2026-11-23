@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="Language School 영어 대화 쇼츠">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LS Shorts">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Language School Shorts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff; --ink:#1d1d1f; --sub:#6e6e73; --line:#e6e6ea;
+    --card:#f6f6f8; --npc:#ffffff; --you:#d8432f; --you-ink:#fff;
+    --ok:#1f8a4c; --ok-bg:#e8f5ee; --bad:#c62828; --bad-bg:#fdecea;
+    --story:#6a4fc9; --story-bg:#f0ecfb; --gold:#e8a317; --gold-bg:#fff6df;
+    --blue:#2563eb; --blue-bg:#eaf1fe;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:"Noto Sans KR",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  body{display:flex;flex-direction:column;align-items:center;overflow:hidden}
+  button{font-family:inherit}
+
+  /* ---------- header ---------- */
+  header{width:100%;max-width:460px;padding:calc(9px + env(safe-area-inset-top)) 14px 8px;display:flex;flex-direction:column;gap:7px;
+    border-bottom:1px solid var(--line);background:var(--bg);z-index:2}
+  .row{display:flex;align-items:center;gap:8px}
+  .brand{font-weight:900;font-size:15px;letter-spacing:-.3px;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .pill,.iconbtn{flex:none}
+  @media (max-width:420px){.brand .long{display:none}}
+  .brand span{color:var(--you)}
+  .pill{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--card);white-space:nowrap}
+  .pill.fire{background:#fff1e8;color:#d4580b}
+  .pill.goal{background:var(--ok-bg);color:var(--ok)}
+  .pill.goal.met{background:var(--ok);color:#fff}
+  .iconbtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 9px;font-size:12px;cursor:pointer;color:var(--ink)}
+  .xp{flex:1;display:flex;align-items:center;gap:8px;font-size:12px}
+  .lvbadge{font-weight:900;font-size:12px;background:var(--ink);color:#fff;border-radius:7px;padding:2px 7px}
+  .xpbar{flex:1;height:8px;background:var(--line);border-radius:5px;overflow:hidden}
+  .xpbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f2b134,#e8771b);transition:width .5s}
+  .xptext{color:var(--sub);white-space:nowrap}
+  .levels{font-size:12px;color:var(--sub)}
+  .chip{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:999px;
+    padding:3px 10px;font-size:12px;cursor:pointer}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .spacer{margin-left:auto}
+  .event{width:100%;max-width:460px;font-size:12px;text-align:center;padding:5px 10px;background:var(--gold-bg);color:#8a5a00;font-weight:500}
+
+  /* ---------- feed ---------- */
+  #feed{flex:1;width:100%;max-width:460px;overflow-y:auto;scroll-snap-type:y mandatory;
+    scrollbar-width:none;overscroll-behavior:contain}
+  #feed::-webkit-scrollbar{display:none}
+  .slide{height:100%;scroll-snap-align:start;scroll-snap-stop:always;padding:12px 12px calc(14px + env(safe-area-inset-bottom));display:flex}
+  .card{flex:1;background:var(--card);border-radius:22px;display:flex;flex-direction:column;overflow:hidden;
+    border:1px solid var(--line);position:relative}
+  .card.k-overhear{background:#f2f7f4}
+  .card.k-phone{background:#f1f4fb}
+  .card.k-quiz{background:var(--gold-bg);border-color:#f3dc9c}
+  .card.revenge{border:2px solid var(--you)}
+  .card.season{border-color:#f0c76a}
+  .meta{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+  .tag{font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;background:#fff;border:1px solid var(--line)}
+  .tag.surprise{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tag.revenge{background:var(--you);color:#fff;border-color:var(--you)}
+  .tag.season{background:var(--gold);color:#fff;border-color:var(--gold)}
+  .tag.double{background:#fff;color:#b07300;border-color:#f0c76a}
+  .scene{font-weight:700;font-size:17px;line-height:1.3}
+  .week{font-size:12px;color:var(--sub);margin-top:2px}
+  .lv{flex:none;font-size:12px;font-weight:700;border-radius:8px;padding:3px 8px;background:#fff;border:1px solid var(--line)}
+  .progress{height:3px;background:var(--line);margin:0 16px;border-radius:2px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--you);transition:width .3s}
+
+  .combo{position:absolute;right:14px;top:70px;z-index:3;font-weight:900;color:#e8771b;pointer-events:none;
+    text-shadow:0 1px 0 #fff;opacity:0}
+  .combo.show{animation:combo .9s ease-out forwards}
+  @keyframes combo{0%{opacity:0;transform:scale(.4) rotate(-8deg)}25%{opacity:1;transform:scale(1.25) rotate(3deg)}
+    60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-14px) scale(1)}}
+
+  .chat{flex:1;overflow-y:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+  .msg{max-width:86%;animation:pop .22s ease-out}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .msg .who{font-size:11px;color:var(--sub);margin:0 0 3px 4px}
+  .bubble{padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.45}
+  .npc .bubble{background:var(--npc);border:1px solid var(--line);border-top-left-radius:6px}
+  .you{align-self:flex-end}
+  .you .who{text-align:right;margin:0 4px 3px 0}
+  .you .bubble{background:var(--you);color:var(--you-ink);border-top-right-radius:6px}
+  .you.story .bubble{background:var(--story)}
+  .you.text .bubble{background:var(--blue)}
+  .center{align-self:center;max-width:94%}
+  .center .bubble{background:#fff;border:1px solid #f0c76a;font-weight:500;text-align:center}
+  .ko{font-size:13px;color:var(--sub);margin-top:5px;display:none}
+  .you .ko{color:rgba(255,255,255,.85)}
+  .show-ko .ko,.msg.reveal .ko{display:block}
+  .tools{display:flex;gap:6px;margin-top:6px}
+  .mini{border:none;background:none;padding:2px 4px;font-size:12px;color:var(--sub);cursor:pointer}
+  .mini:hover{color:var(--ink)}
+
+  .answer{padding:8px 14px 14px;display:flex;flex-direction:column;gap:8px}
+  .hint{font-size:12px;color:var(--sub);text-align:center}
+  .hint.story{color:var(--story)}
+  .opt{text-align:left;border:1px solid var(--line);background:#fff;border-radius:14px;padding:11px 13px;
+    font-size:15px;color:var(--ink);cursor:pointer;display:flex;gap:10px;align-items:flex-start;
+    transition:background .15s,border-color .15s}
+  .opt:hover{border-color:#c9c9cf}
+  .opt .n{flex:none;width:20px;height:20px;border-radius:6px;background:var(--card);font-size:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);margin-top:1px}
+  .opt .oko{display:none;font-size:12px;color:var(--sub);margin-top:3px}
+  .show-ko .opt .oko{display:block}
+  .opt.wrong{background:var(--bad-bg);border-color:#f3b8b2;color:var(--bad);cursor:default;animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  .feedback{font-size:13px;color:var(--bad);background:var(--bad-bg);border-radius:12px;padding:9px 12px;animation:pop .2s}
+
+  .done{margin:4px 14px 14px;padding:13px 14px;border-radius:16px;background:var(--ok-bg);color:var(--ok);
+    text-align:center;animation:pop .25s;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .done b{font-size:16px}
+  .done small{color:var(--sub);font-size:12px}
+  .done .gain{font-weight:900;color:#e8771b;font-size:14px}
+  .done .col{font-size:12px;color:var(--ink)}
+  .dots{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:#d7d7dc;display:inline-block}
+  .dots i.on{background:var(--ok)}
+  .dots i.now{background:var(--ok);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--ok)}
+  .done .explain{font-size:12px;color:var(--ink);background:#fff;border-radius:10px;padding:7px 10px;margin:2px 0}
+  .peek{font-size:12px;color:var(--sub);margin-top:2px}
+  .peek b{font-size:12px;color:var(--ink)}
+  .next{margin-top:6px;border:none;background:var(--ok);color:#fff;border-radius:999px;padding:8px 16px;font-size:13px;cursor:pointer}
+  .skip{font-size:11px;color:var(--sub);text-align:center;padding:0 0 10px}
+
+  .empty,.loading{height:100%;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:14px;text-align:center;padding:30px}
+
+  /* ---------- toast ---------- */
+  #toasts{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:20;display:flex;flex-direction:column;gap:8px;
+    width:min(420px,92vw);pointer-events:none}
+  .toast{background:var(--ink);color:#fff;border-radius:14px;padding:11px 14px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);
+    animation:tin .3s ease-out;display:flex;gap:10px;align-items:center}
+  .toast .em{font-size:22px}
+  .toast small{display:block;color:#c9c9cf;font-size:12px;margin-top:1px}
+  .toast.out{animation:tout .3s ease-in forwards}
+  @keyframes tin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+  @keyframes tout{to{opacity:0;transform:translateY(-12px)}}
+
+  /* ---------- update banner ---------- */
+  #updateBar{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:15;
+    background:var(--blue);color:#fff;border:none;border-radius:999px;padding:11px 18px;font-size:14px;font-weight:700;
+    box-shadow:0 8px 24px rgba(37,99,235,.35);cursor:pointer;display:none;animation:tin .3s ease-out;white-space:nowrap}
+  #updateBar.show{display:block}
+  .ver{font-size:11px;color:var(--sub);text-align:center;margin-top:16px}
+
+  /* ---------- collection ---------- */
+  #book{position:fixed;inset:0;background:#fff;z-index:10;display:none;flex-direction:column;align-items:center}
+  #book.open{display:flex}
+  .bookhead{width:100%;max-width:460px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .bookhead h2{margin:0;font-size:17px;margin-right:auto}
+  .bookbody{flex:1;width:100%;max-width:460px;overflow-y:auto;padding:12px 14px 30px}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .summary div{background:var(--card);border-radius:12px;padding:10px;text-align:center}
+  .summary b{display:block;font-size:18px}
+  .summary span{font-size:11px;color:var(--sub)}
+  .week-box{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+  .week-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:6px}
+  .week-title .cnt{margin-left:auto;font-size:12px;color:var(--sub);font-weight:500}
+  .scene-row{display:flex;align-items:center;font-size:13px;padding:4px 0;gap:6px}
+  .scene-row .nm{flex:1}
+  .scene-row .stamp{font-size:14px;width:18px;text-align:center}
+  .diary-btn{border:1px solid var(--story);color:var(--story);background:var(--story-bg);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}
+  .diary-lock{font-size:12px;color:var(--sub)}
+  .diary{margin-top:8px;background:var(--story-bg);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.55;display:none}
+  .diary.open{display:block}
+  .diary .dko{color:var(--sub);font-size:13px;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div class="brand"><span class="long" style="color:inherit">Language School </span><span>Shorts</span></div>
+    <span class="pill fire" id="hStreak" title="며칠 연속으로 했는지">🔥 0일</span>
+    <span class="pill goal" id="hGoal" title="오늘 목표">오늘 0/10</span>
+    <button class="iconbtn" id="bookBtn" style="white-space:nowrap">📖 도감</button>
+  </div>
+  <div class="row">
+    <div class="xp"><span class="lvbadge" id="hLv">Lv 1</span><div class="xpbar"><i id="hBar"></i></div><span class="xptext" id="hXp"></span></div>
+  </div>
+  <div class="row levels" id="levels">레벨
+    <span class="spacer"></span>
+    <button class="chip" id="soundBtn" title="효과음">🔊</button>
+    <button class="chip" id="koToggle" title="번역 항상 보기">번역</button>
+  </div>
+</header>
+<div class="event" id="eventBar" hidden></div>
+<main id="feed"><div class="loading">대화문을 불러오는 중…</div></main>
+<div id="toasts"></div>
+<button id="updateBar">🔄 새 업데이트가 있어요 · 눌러서 적용</button>
+
+<div id="book">
+  <div class="bookhead"><h2>📖 장면 도감</h2><button class="iconbtn" id="bookClose">닫기</button></div>
+  <div class="bookbody" id="bookBody"></div>
+</div>
+
+<script>
+(() => {
+  /* =====================================================================
+     저장 (이 브라우저에만 남아요)
+  ===================================================================== */
+  const store = {
+    get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
+    set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+  };
+  const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); };
+  const P = Object.assign({xp:0, clears:{}, days:[], todayDate:"", todayCount:0, goalShown:"", solved:0, clean:0, bestCombo:0, diaries:[]},
+                          store.get("ls.progress", {}));
+  const save = () => store.set("ls.progress", P);
+
+  const GOAL = 10;
+  let ALL = [], EX = {overhear:[], phone:[], quiz:[], diary:{}};
+  let levels = new Set((store.get("ls.levelset", [1,2,3,4,5]) || []).filter(l => l >= 1 && l <= 5));
+  if (!levels.size) levels = new Set([1,2,3,4,5]);
+  let showKo = store.get("ls.ko", false);
+  let soundOn = store.get("ls.sound", true);
+  let combo = 0;
+
+  const feed = document.getElementById("feed");
+  const slides = [];
+  let active = 0;
+
+  /* =====================================================================
+     7. 계절 한정: 실제 날짜에 맞는 주차 장면이 더 자주 나옴
+  ===================================================================== */
+  const EVENTS = [
+    {from:"09-20", to:"10-12", ch:[6],      em:"🏈", name:"홈커밍 시즌"},
+    {from:"10-01", to:"10-20", ch:[10],     em:"🍎", name:"가을 소풍 시즌"},
+    {from:"10-15", to:"10-31", ch:[9],      em:"🎃", name:"할로윈 시즌"},
+    {from:"11-10", to:"11-30", ch:[11],     em:"🦃", name:"추수감사절 시즌"},
+    {from:"12-01", to:"12-15", ch:[12],     em:"❄️", name:"첫눈 시즌"},
+    {from:"12-10", to:"12-26", ch:[13,17],  em:"🎄", name:"크리스마스 시즌"},
+    {from:"04-15", to:"05-31", ch:[28,29,30],em:"💃", name:"프롬 시즌"},
+  ];
+  const md = today().slice(5);
+  const activeEvents = EVENTS.filter(e => e.from <= md && md <= e.to);
+  const seasonCh = new Set(activeEvents.flatMap(e => e.ch));
+  const eventOf = ch => activeEvents.find(e => e.ch.includes(ch));
+  if (activeEvents.length){
+    const bar = document.getElementById("eventBar");
+    bar.hidden = false;
+    bar.textContent = activeEvents.map(e => `${e.em} ${e.name}`).join(" · ") + " — 관련 장면이 더 자주 나오고 보너스 XP!";
+  }
+
+  /* =====================================================================
+     효과음 (Web Audio, 클릭할 때만 소리 남)
+  ===================================================================== */
+  let actx = null;
+  function tone(freqs, dur = .09, type = "sine", vol = .12){
+    if (!soundOn) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      freqs.forEach((f, i) => {
+        const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i * dur;
+        o.type = type; o.frequency.value = f;
+        g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur * 1.8);
+        o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur * 2);
+      });
+    } catch(e){}
+  }
+  const sfx = {
+    right: c => tone([523 * Math.pow(1.06, Math.min(c, 12))], .08),
+    wrong: () => tone([220, 180], .09, "square", .06),
+    done:  () => tone([523, 659, 784], .08),
+    big:   () => tone([523, 659, 784, 1047], .1, "triangle", .14),
+  };
+
+  /* =====================================================================
+     4. 경험치·레벨
+  ===================================================================== */
+  const need = lv => 80 + lv * 20;
+  function levelInfo(xp){
+    let lv = 1, rest = xp;
+    while (rest >= need(lv)){ rest -= need(lv); lv++; }
+    return {lv, rest, need: need(lv)};
+  }
+  function addXp(n){
+    const before = levelInfo(P.xp).lv;
+    P.xp += n; save();
+    const after = levelInfo(P.xp);
+    if (after.lv > before){ sfx.big(); toast("⬆️", `레벨 업! Lv ${after.lv}`, "다음 레벨까지 " + after.need + " XP"); }
+    drawHeader();
+  }
+
+  /* =====================================================================
+     3. 연속 기록 · 오늘 목표
+  ===================================================================== */
+  function streak(){
+    const set = new Set(P.days);
+    let n = 0; const d = new Date();
+    if (!set.has(today())) d.setDate(d.getDate() - 1);   // 오늘 아직 안 했으면 어제부터 셈
+    while (true){
+      const k = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+      if (!set.has(k)) break;
+      n++; d.setDate(d.getDate() - 1);
+    }
+    return n;
+  }
+  function countToday(){
+    const t = today();
+    if (P.todayDate !== t){ P.todayDate = t; P.todayCount = 0; }
+    const first = !P.days.includes(t);
+    if (first){ P.days.push(t); P.days = P.days.slice(-400); }
+    P.todayCount++;
+    save();
+    if (first){
+      const s = streak();
+      if (s > 1) toast("🔥", `${s}일 연속!`, "내일도 와서 기록을 이어 가요");
+    }
+    if (P.todayCount === GOAL && P.goalShown !== t){
+      P.goalShown = t; save(); sfx.big();
+      toast("🎉", `오늘 목표 ${GOAL}개 달성!`, "여기서 쉬어도 좋아요. 내일 또 와서 🔥를 이어 가요");
+    }
+  }
+
+  /* ---------- header ---------- */
+  function drawHeader(){
+    const s = streak();
+    hStreak.textContent = `🔥 ${s}일`;
+    const tc = P.todayDate === today() ? P.todayCount : 0;
+    hGoal.textContent = tc >= GOAL ? `오늘 ${tc}개 ✓` : `오늘 ${tc}/${GOAL}`;
+    hGoal.classList.toggle("met", tc >= GOAL);
+    const li = levelInfo(P.xp);
+    hLv.textContent = `Lv ${li.lv}`;
+    hBar.style.width = (li.rest / li.need * 100) + "%";
+    const left = Math.max(1, Math.ceil((li.need - li.rest) / 25));
+    hXp.textContent = left <= 2 ? `레벨업까지 ${left}개!` : `${li.rest}/${li.need} XP`;
+  }
+
+  const levelsEl = document.getElementById("levels");
+  const spacer = levelsEl.querySelector(".spacer");
+  for (let l = 1; l <= 5; l++){
+    const b = document.createElement("button");
+    b.className = "chip" + (levels.has(l) ? " on" : "");
+    b.textContent = l;
+    b.onclick = () => {
+      if (levels.has(l)){ if (levels.size === 1) return; levels.delete(l); } else levels.add(l);
+      b.classList.toggle("on", levels.has(l));
+      store.set("ls.levelset", [...levels]);
+      resetFeed();
+    };
+    levelsEl.insertBefore(b, spacer);
+  }
+  const applyKo = () => { document.body.classList.toggle("show-ko", showKo); koToggle.classList.toggle("on", showKo); };
+  koToggle.onclick = () => { showKo = !showKo; store.set("ls.ko", showKo); applyKo(); };
+  applyKo();
+  const applySound = () => { soundBtn.textContent = soundOn ? "🔊" : "🔇"; };
+  soundBtn.onclick = () => { soundOn = !soundOn; store.set("ls.sound", soundOn); applySound(); };
+  applySound();
+
+  /* ---------- toast ---------- */
+  function toast(em, title, sub){
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.innerHTML = `<span class="em">${em}</span><div>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
+    toasts.appendChild(t);
+    setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 320); }, 2600);
+  }
+
+  /* ---------- 유틸 ---------- */
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const pickOne = a => a[Math.floor(Math.random() * a.length)];
+  const sceneOf = c => c.k.replace(/_L\d$/, "");
+  function speak(text){
+    try {
+      if (!("speechSynthesis" in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US"; u.rate = 0.95;
+      speechSynthesis.speak(u);
+    } catch(e){}
+  }
+
+  /* =====================================================================
+     카드 고르기: 덱(한 바퀴) + 7. 계절 가중치 + 6. 리벤지 + 1. 깜짝 카드
+  ===================================================================== */
+  let deck = [], lastScene = null, appended = 0, sinceSurprise = 0;
+  const revengeQ = [];
+  const revenged = new Set();
+
+  function nextDialogue(){
+    const pool = ALL.filter(c => levels.has(c.l));
+    if (!pool.length) return null;
+    // 계절 장면: 35% 확률로 우선
+    if (seasonCh.size && Math.random() < .35){
+      const sp = pool.filter(c => seasonCh.has(c.c) && sceneOf(c) !== lastScene);
+      if (sp.length){ const c = pickOne(sp); lastScene = sceneOf(c); return c; }
+    }
+    if (!deck.length) deck = shuffle(pool.slice());
+    let i = deck.findIndex(c => sceneOf(c) !== lastScene);
+    if (i < 0) i = 0;
+    const c = deck.splice(i, 1)[0];
+    lastScene = sceneOf(c);
+    return c;
+  }
+
+  function nextItem(){
+    appended++;
+    // 리벤지: 틀렸던 카드가 3~5장 뒤에 다시 나옴
+    const due = revengeQ.findIndex(r => r.at <= appended && levels.has(r.card.l));
+    if (due >= 0){ const r = revengeQ.splice(due, 1)[0]; return {kind:"dialogue", card:r.card, revenge:true}; }
+    // 깜짝 카드: 4장 이상 지나면 25% 확률, 9장째에는 반드시
+    sinceSurprise++;
+    if (sinceSurprise >= 4 && (Math.random() < .25 || sinceSurprise >= 9)){
+      sinceSurprise = 0;
+      const kinds = [];
+      if (EX.overhear.length > 3) kinds.push("overhear", "overhear");
+      if (EX.phone.length) kinds.push("phone", "phone");
+      if (EX.quiz.length) kinds.push("quiz");
+      if (kinds.length) return {kind: pickOne(kinds)};
+    }
+    const card = nextDialogue();
+    return card ? {kind:"dialogue", card} : null;
+  }
+
+  /* =====================================================================
+     공통 카드 틀
+  ===================================================================== */
+  function frame(item, {cls = "", tags = [], title, sub, right = ""}){
+    const el = document.createElement("section");
+    el.className = "slide";
+    el.innerHTML = `
+      <div class="card ${cls}">
+        <div class="meta">
+          <div>
+            ${tags.length ? `<div class="tags">${tags.map(t => `<span class="tag ${t[0]}">${esc(t[1])}</span>`).join("")}</div>` : ""}
+            <div class="scene">${esc(title)}</div><div class="week">${esc(sub)}</div>
+          </div>
+          ${right ? `<div class="lv">${esc(right)}</div>` : ""}
+        </div>
+        <div class="progress"><i></i></div>
+        <div class="combo"></div>
+        <div class="chat"></div>
+        <div class="answer"></div>
+        <div class="skip">밑으로 내리면 다른 대화로 넘어가요</div>
+      </div>`;
+    return {item, el, wrong: 0, firstTryAll: true, finished: false, xp: 0,
+      cardEl: el.querySelector(".card"), chat: el.querySelector(".chat"), answer: el.querySelector(".answer"),
+      bar: el.querySelector(".progress i"), skip: el.querySelector(".skip"), comboEl: el.querySelector(".combo")};
+  }
+
+  function addMsg(st, who, en, ko, kind, {sayable = true} = {}){
+    const m = document.createElement("div");
+    m.className = "msg " + kind;
+    m.innerHTML = `${who ? `<div class="who">${esc(who)}</div>` : ""}
+      <div class="bubble">${esc(en)}${ko ? `<div class="ko">${esc(ko)}</div>` : ""}</div>
+      <div class="tools"></div>`;
+    const tools = m.querySelector(".tools");
+    if (sayable){
+      const say = document.createElement("button"); say.className = "mini"; say.textContent = "🔊 듣기";
+      say.onclick = () => speak(en); tools.appendChild(say);
+    }
+    if (ko){
+      const tr = document.createElement("button"); tr.className = "mini"; tr.textContent = "번역";
+      tr.onclick = () => m.classList.toggle("reveal"); tools.appendChild(tr);
+    }
+    if (kind.startsWith("you")) tools.style.justifyContent = "flex-end";
+    st.chat.appendChild(m);
+    scrollChat(st);
+    return m;
+  }
+
+  function scrollChat(st){
+    const down = () => st.chat.scrollTo({top: st.chat.scrollHeight, behavior: "smooth"});
+    requestAnimationFrame(() => requestAnimationFrame(down));
+    setTimeout(down, 260);
+  }
+
+  // 선택지 그리기. opts: [{en, ko, ok, fb}], onRight(opt)
+  function renderOptions(st, hintText, hintCls, opts, onRight){
+    st.answer.innerHTML = "";
+    const hint = document.createElement("div");
+    hint.className = "hint " + (hintCls || "");
+    hint.textContent = hintText;
+    st.answer.appendChild(hint);
+    let fbEl = null, missed = false;
+    shuffle(opts.slice()).forEach((o, i) => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.innerHTML = `<span class="n">${i + 1}</span><span>${esc(o.en)}${o.ko ? `<span class="oko">${esc(o.ko)}</span>` : ""}</span>`;
+      b.onclick = () => {
+        if (b.classList.contains("wrong") || st.finished) return;
+        if (o.ok){
+          if (!missed){ combo++; P.bestCombo = Math.max(P.bestCombo, combo); st.xp += 2 + Math.min(combo, 10); showCombo(st); }
+          sfx.right(combo);
+          onRight(o);
+        } else {
+          missed = true; st.wrong++; st.firstTryAll = false; combo = 0;
+          sfx.wrong();
+          b.classList.add("wrong");
+          if (!fbEl){ fbEl = document.createElement("div"); fbEl.className = "feedback"; st.answer.appendChild(fbEl); }
+          fbEl.textContent = o.fb || "다시 골라 보세요.";
+          fbEl.style.animation = "none"; void fbEl.offsetWidth; fbEl.style.animation = "";
+          scrollChat(st);
+        }
+      };
+      st.answer.appendChild(b);
+    });
+    scrollChat(st);
+  }
+
+  /* ---------- 3. 콤보 표시 ---------- */
+  function showCombo(st){
+    if (combo < 2) return;
+    const el = st.comboEl;
+    el.textContent = `🔥 콤보 ×${combo}`;
+    el.style.fontSize = Math.min(14 + combo * 1.6, 30) + "px";
+    el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+  }
+
+  /* =====================================================================
+     일반 대화 카드
+  ===================================================================== */
+  function buildDialogue(item){
+    const card = item.card, ev = eventOf(card.c);
+    const tags = [];
+    if (item.revenge) tags.push(["revenge", "🔁 리벤지! 이번엔 한 번에"]);
+    if (ev) tags.push(["season", `${ev.em} 시즌 한정 · XP +5`]);
+    const st = frame(item, {cls: (item.revenge ? "revenge " : "") + (ev ? "season" : ""), tags,
+      title: card.s, sub: card.w, right: `Level ${card.l}`});
+    st.step = 0; st.season = !!ev;
+    dialogueStep(st);
+    return st;
+  }
+  function dialogueStep(st){
+    const steps = st.item.card.t;
+    st.bar.style.width = (st.step / steps.length * 100) + "%";
+    st.answer.innerHTML = "";
+    if (st.step >= steps.length) return finishDialogue(st);
+    const [who, en, ko, type, opts] = steps[st.step];
+    addMsg(st, who, en, ko, "npc");
+    if (type === 1 || !opts.length){ st.step++; return setTimeout(() => dialogueStep(st), 350); }
+    const story = type === 2;
+    renderOptions(st, story ? "이야기 선택 · 어느 것을 골라도 맞는 영어예요" : "알맞은 대답을 고르세요", story ? "story" : "",
+      opts.map(([oen, oko, ok, fb]) => ({en: oen, ko: oko, ok: !!ok, fb})),
+      o => { addMsg(st, "You", o.en, o.ko, story ? "you story" : "you"); st.step++; dialogueStep(st); });
+  }
+  function finishDialogue(st){
+    const card = st.item.card, clean = st.wrong === 0;
+    // 2. 도감 기록
+    const key = sceneOf(card);
+    const rec = P.clears[key] || (P.clears[key] = []);
+    const newLevel = !rec.includes(card.l);
+    if (newLevel) rec.push(card.l);
+    const stamped = newLevel && rec.length === 5;
+    // XP
+    let gain = 10 + card.l * 2 + (clean ? 5 : 0) + st.xp;
+    if (st.season) gain += 5;
+    if (st.item.revenge && clean) gain += 15;
+    // 6. 리벤지 예약
+    if (!clean && !st.item.revenge && !revenged.has(card.k)){
+      revenged.add(card.k);
+      revengeQ.push({card, at: appended + 3 + Math.floor(Math.random() * 3)});
+    }
+    const dots = [1,2,3,4,5].map(l => `<i class="${l === card.l && newLevel ? "now" : rec.includes(l) ? "on" : ""}"></i>`).join("");
+    const extra = `<div class="col">도감 · ${esc(card.s)} ${rec.length}/5<span class="dots">${dots}</span></div>
+      ${!clean && !st.item.revenge ? `<small>틀린 대화는 잠시 뒤 🔁 리벤지로 다시 나와요</small>` : ""}`;
+    completeCard(st, {
+      title: st.item.revenge ? (clean ? "리벤지 성공! 🔁" : "다시 한번 완료!") : (clean ? "완벽해요! 한 번에 맞혔어요" : "완료!"),
+      sub: clean ? "" : `틀린 횟수 ${st.wrong}번`, gain, extra, clean});
+    if (stamped){ sfx.big(); toast("🏅", `스탬프 획득: ${card.s}`, "레벨 1~5를 모두 깼어요"); }
+    if (newLevel) checkDiary(card.c);
+  }
+
+  /* =====================================================================
+     1. 깜짝 카드: 엿듣기 / 메시지 / 보너스 퀴즈
+  ===================================================================== */
+  function buildOverhear(item){
+    const conv = pickOne(EX.overhear);
+    const st = frame(item, {cls: "k-overhear", tags: [["surprise", "✨ 깜짝 카드"]],
+      title: "👂 엿듣기", sub: `${conv.p}에서 들려온 대화`, right: "+15 XP"});
+    addMsg(st, "행인 A", conv.a[0], conv.a[1], "npc");
+    const others = shuffle(EX.overhear.filter(c => c !== conv)).slice(0, 2);
+    renderOptions(st, "B는 뭐라고 대답했을까요?", "",
+      [{en: conv.b[0], ko: conv.b[1], ok: true},
+       ...others.map(c => ({en: c.b[0], ko: c.b[1], ok: false, fb: "흐름에 안 맞아요. A의 말을 다시 들어 보세요."}))],
+      () => { addMsg(st, "행인 B", conv.b[0], conv.b[1], "npc"); st.bar.style.width = "100%";
+              completeCard(st, {title: st.wrong ? "엿듣기 완료!" : "귀가 밝네요! 👂", sub: st.wrong ? `틀린 횟수 ${st.wrong}번` : "",
+                gain: 15 + st.xp, clean: !st.wrong}); });
+    return st;
+  }
+
+  function buildPhone(item){
+    const th = pickOne(EX.phone);
+    const st = frame(item, {cls: "k-phone", tags: [["surprise", "✨ 깜짝 카드"]],
+      title: `📱 ${th.r}`, sub: `${th.w} · 새 메시지`, right: "+10 XP"});
+    th.m.forEach(([who, en, ko]) => addMsg(st, who, en, ko, "npc"));
+    const done = () => { st.bar.style.width = "100%";
+      completeCard(st, {title: st.wrong ? "확인 완료!" : "답장 완료! 📱", sub: st.wrong ? `틀린 횟수 ${st.wrong}번` : "", gain: 10 + st.xp, clean: !st.wrong}); };
+    if (th.rep.length){
+      renderOptions(st, "답장을 골라 보세요 · 어느 것이든 괜찮은 답장이에요", "story",
+        th.rep.map(([en, ko]) => ({en, ko, ok: true})),
+        o => { addMsg(st, "나", o.en, o.ko, "you text"); done(); });
+    } else {
+      const last = th.m[th.m.length - 1];
+      const pool = EX.phone.flatMap(t => t.m).filter(m => m !== last && m[2]).map(m => m[2]);
+      const wrongs = shuffle([...new Set(pool)]).slice(0, 2);
+      renderOptions(st, `${last[0]}의 마지막 메시지는 무슨 뜻일까요?`, "",
+        [{en: last[2], ok: true}, ...wrongs.map(w => ({en: w, ok: false, fb: "다시 읽어 보세요."}))],
+        () => { addMsg(st, "", "👍 읽음", "", "you text", {sayable: false}); done(); });
+    }
+    return st;
+  }
+
+  function buildQuiz(item){
+    const q = pickOne(EX.quiz);
+    const st = frame(item, {cls: "k-quiz", tags: [["surprise", "✨ 깜짝 카드"], ["double", "XP 2배"]],
+      title: "🎉 보너스 퀴즈", sub: "미국 생활 상식", right: "+40 XP"});
+    addMsg(st, "Quiz", q.q, "", "center");
+    renderOptions(st, "정답을 고르세요", "",
+      [{en: q.a, ok: true}, ...q.x.map(x => ({en: x, ok: false, fb: "아쉬워요! 다시 골라 보세요."}))],
+      o => { addMsg(st, "You", o.en, "", "you"); st.bar.style.width = "100%";
+             completeCard(st, {title: st.wrong ? "정답!" : "한 번에 정답! 🎉", sub: st.wrong ? `틀린 횟수 ${st.wrong}번` : "",
+               gain: (st.wrong ? 20 : 40) + st.xp * 2, clean: !st.wrong, extra: `<div class="explain">${esc(q.e)}</div>`}); });
+    return st;
+  }
+
+  /* =====================================================================
+     완료 상자 + 5. 다음 카드 미리보기
+  ===================================================================== */
+  function completeCard(st, {title, sub, gain, extra = "", clean}){
+    st.finished = true;
+    st.bar.style.width = "100%";
+    st.skip.remove();
+    st.answer.innerHTML = "";
+    P.solved++; if (clean) P.clean++;
+    save();
+    countToday();
+    addXp(gain);
+    sfx.done();
+
+    const idx = slides.indexOf(st);
+    while (slides.length <= idx + 1) append();
+    const nx = slides[idx + 1];
+    let peek = "";
+    if (nx){
+      const it = nx.item;
+      peek = it.kind !== "dialogue" ? "✨ <b>무언가 특별한 카드</b>"
+        : it.revenge ? `🔁 <b>리벤지: ${esc(it.card.s)}</b>`
+        : `${eventOf(it.card.c) ? eventOf(it.card.c).em + " " : ""}<b>${esc(it.card.s)}</b> · Level ${it.card.l}`;
+    }
+    const d = document.createElement("div");
+    d.className = "done";
+    d.innerHTML = `<b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}
+      <span class="gain">+${gain} XP</span>${extra}
+      ${peek ? `<div class="peek">다음: ${peek}</div>` : ""}`;
+    const nb = document.createElement("button"); nb.className = "next"; nb.textContent = "다음 ↓";
+    nb.onclick = () => go(idx + 1);
+    d.appendChild(nb);
+    st.cardEl.appendChild(d);
+    scrollChat(st);
+  }
+
+  /* =====================================================================
+     2. 도감 + 일기 해금
+  ===================================================================== */
+  function weekScenes(){
+    const m = new Map();   // chapter -> {week, scenes: Map(sceneKey -> name)}
+    ALL.forEach(c => {
+      if (!m.has(c.c)) m.set(c.c, {week: c.w, scenes: new Map()});
+      m.get(c.c).scenes.set(sceneOf(c), c.s);
+    });
+    return new Map([...m.entries()].sort((a, b) => a[0] - b[0]));
+  }
+  function weekDone(ch){
+    const w = weekScenes().get(ch);
+    return w && [...w.scenes.keys()].every(k => (P.clears[k] || []).length > 0);
+  }
+  function checkDiary(ch){
+    if (P.diaries.includes(ch) || !EX.diary[ch] || !weekDone(ch)) return;
+    P.diaries.push(ch); save(); sfx.big();
+    toast("📔", "일기 해금!", `${EX.diary[ch][0]} — 도감에서 읽어 보세요`);
+  }
+  function drawBook(){
+    const W = weekScenes();
+    const allScenes = [...W.values()].flatMap(w => [...w.scenes.keys()]);
+    const stamps = allScenes.filter(k => (P.clears[k] || []).length === 5).length;
+    const lvDone = allScenes.reduce((n, k) => n + (P.clears[k] || []).length, 0);
+    let h = `<div class="summary">
+      <div><b>${stamps}/${allScenes.length}</b><span>🏅 스탬프</span></div>
+      <div><b>${lvDone}/${allScenes.length * 5}</b><span>깬 레벨</span></div>
+      <div><b>${P.diaries.length}</b><span>📔 일기</span></div></div>
+      <div class="summary">
+      <div><b>${P.solved}</b><span>푼 카드</span></div>
+      <div><b>${P.clean}</b><span>한 번에 맞힘</span></div>
+      <div><b>×${P.bestCombo}</b><span>최고 콤보</span></div></div>`;
+    for (const [ch, w] of W){
+      const keys = [...w.scenes.keys()];
+      const got = keys.filter(k => (P.clears[k] || []).length > 0).length;
+      const open = P.diaries.includes(ch), dia = EX.diary[ch];
+      h += `<div class="week-box"><div class="week-title">${esc(w.week)}<span class="cnt">${got}/${keys.length} 장면</span></div>`;
+      for (const k of keys){
+        const r = P.clears[k] || [];
+        h += `<div class="scene-row"><span class="stamp">${r.length === 5 ? "🏅" : ""}</span><span class="nm">${esc(w.scenes.get(k))}</span>
+          <span class="dots">${[1,2,3,4,5].map(l => `<i class="${r.includes(l) ? "on" : ""}"></i>`).join("")}</span></div>`;
+      }
+      if (dia){
+        h += open
+          ? `<div style="margin-top:6px"><button class="diary-btn" data-ch="${ch}">📔 이번 주 일기 읽기</button>
+             <div class="diary" id="dia-${ch}">${esc(dia[1])}<div class="dko">${esc(dia[2])}</div></div></div>`
+          : `<div class="diary-lock" style="margin-top:6px">🔒 이 주의 장면을 모두 한 번씩 깨면 일기가 열려요</div>`;
+      }
+      h += `</div>`;
+    }
+    h += `<div class="ver">데이터 버전 ${esc(VERSION.version || "-")} · ${esc(VERSION.builtAt || "")}</div>`;
+    bookBody.innerHTML = h;
+    bookBody.querySelectorAll(".diary-btn").forEach(b => b.onclick = () => document.getElementById("dia-" + b.dataset.ch).classList.toggle("open"));
+  }
+  bookBtn.onclick = () => { drawBook(); book.classList.add("open"); };
+  bookClose.onclick = () => book.classList.remove("open");
+
+  /* =====================================================================
+     피드
+  ===================================================================== */
+  function build(item){
+    if (item.kind === "overhear") return buildOverhear(item);
+    if (item.kind === "phone") return buildPhone(item);
+    if (item.kind === "quiz") return buildQuiz(item);
+    return buildDialogue(item);
+  }
+  function append(){
+    const item = nextItem();
+    if (!item) return;
+    const st = build(item);
+    slides.push(st);
+    feed.appendChild(st.el);
+    io.observe(st.el);
+  }
+  function go(i){
+    while (i >= slides.length - 1) append();
+    slides[i] && slides[i].el.scrollIntoView({behavior: "smooth"});
+  }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.intersectionRatio > 0.6){
+        active = slides.findIndex(s => s.el === e.target);
+        while (slides.length - active < 3) append();
+      }
+    });
+  }, {root: feed, threshold: [0.6]});
+
+  function resetFeed(){
+    slides.forEach(s => io.unobserve(s.el));
+    slides.length = 0; feed.innerHTML = ""; deck = []; lastScene = null; active = 0;
+    revengeQ.length = 0;
+    if (!ALL.some(c => levels.has(c.l))){ feed.innerHTML = '<div class="empty">이 레벨에는 대화가 없어요.</div>'; return; }
+    for (let i = 0; i < 3; i++) append();
+    feed.scrollTop = 0;
+  }
+
+  document.addEventListener("keydown", e => {
+    if (book.classList.contains("open")){ if (e.key === "Escape") book.classList.remove("open"); return; }
+    if (e.key === "ArrowDown" || e.key === "PageDown"){ e.preventDefault(); go(active + 1); }
+    else if (e.key === "ArrowUp" || e.key === "PageUp"){ e.preventDefault(); go(Math.max(0, active - 1)); }
+    else if (/^[1-9]$/.test(e.key)){
+      const st = slides[active]; if (!st) return;
+      const b = st.answer.querySelectorAll(".opt")[+e.key - 1]; b && b.click();
+    }
+  });
+
+  drawHeader();
+  /* =====================================================================
+     데이터 불러오기 + 업데이트 확인
+     - 앱을 열 때마다 서버의 version.json을 먼저 확인하고 그 버전의 데이터를 받아요.
+     - 앱을 켜 둔 채로 다시 돌아오면(백그라운드 → 앞) 새 버전이 있는지 확인해 배너를 띄워요.
+     - 인터넷이 없으면 마지막으로 받아 둔 데이터로 실행돼요(서비스 워커 캐시).
+  ===================================================================== */
+  let VERSION = {};
+  const getJSON = (url, fresh) => fetch(url, fresh ? {cache: "no-store"} : {}).then(r => { if (!r.ok) throw r.status; return r.json(); });
+
+  async function loadData(){
+    try { VERSION = await getJSON("data/version.json", true); } catch(e){ VERSION = {}; }
+    const v = VERSION.version ? "?v=" + VERSION.version : "";
+    const [c, x] = await Promise.all([getJSON("data/cards.json" + v), getJSON("data/extras.json" + v)]);
+    ALL = c; EX = x;
+    const seen = store.get("ls.seenVersion", null);
+    if (VERSION.version && seen && seen !== VERSION.version)
+      toast("✨", "업데이트 완료!", `대화 ${VERSION.cards}개 · ${VERSION.builtAt} 버전`);
+    if (VERSION.version) store.set("ls.seenVersion", VERSION.version);
+    resetFeed();
+  }
+
+  async function checkUpdate(){
+    if (!VERSION.version) return;
+    try {
+      const now = await getJSON("data/version.json", true);
+      if (now.version && now.version !== VERSION.version) updateBar.classList.add("show");
+    } catch(e){}
+  }
+  updateBar.onclick = () => location.reload();
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkUpdate(); });
+  setInterval(checkUpdate, 10 * 60 * 1000);
+
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+
+  /*DATA-LOAD*/
+  loadData().catch(() => { feed.innerHTML = '<div class="empty">대화문을 불러오지 못했어요.<br>인터넷 연결을 확인해 주세요.</div>'; });
+  /*DATA-LOAD-END*/
+})();
+</script>
+</body>
+</html>

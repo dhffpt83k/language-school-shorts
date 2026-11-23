@@ -1,0 +1,52 @@
+# 엑셀이나 앱 파일을 main 브랜치에 올리면:
+#   1) 엑셀 검사 → 2) 게임 데이터(JSON) 생성 → 3) GitHub Pages에 배포
+# 검사에서 문제가 나오면 배포하지 않아서, 앱에는 깨진 데이터가 올라가지 않아요.
+name: 앱 배포
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 엑셀 검사 + 게임 데이터 만들기
+        run: |
+          pip install openpyxl
+          python tools/build_data.py
+
+      - name: 배포할 파일 모으기
+        run: |
+          mkdir -p _site
+          cp -r index.html sw.js manifest.webmanifest icons data _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
