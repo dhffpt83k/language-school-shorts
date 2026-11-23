@@ -116,7 +116,16 @@
   .opt .n{flex:none;width:20px;height:20px;border-radius:6px;background:var(--card);font-size:12px;
     display:flex;align-items:center;justify-content:center;color:var(--sub);margin-top:1px}
   .opt .oko{display:none;font-size:12px;color:var(--sub);margin-top:3px}
-  .show-ko .opt .oko{display:block}
+  .show-ko .opt .oko,.opt.reveal .oko{display:block}
+  .opt{user-select:none;-webkit-user-select:none}
+  .opt .otext{flex:1;min-width:0}
+  .otools{display:flex;gap:4px;margin-top:6px;margin-left:-4px}
+  .otools .mini{font-size:12px;padding:3px 6px;border-radius:8px}
+  .otools .mini:active{background:var(--card)}
+  #soundHint{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:14;
+    background:var(--ink);color:#fff;border-radius:999px;padding:9px 16px;font-size:13px;white-space:nowrap;
+    box-shadow:0 6px 18px rgba(0,0,0,.2);display:none;pointer-events:none;animation:tin .3s ease-out}
+  #soundHint.show{display:block}
   .opt.wrong{background:var(--bad-bg);border-color:#f3b8b2;color:var(--bad);cursor:default;animation:shake .3s}
   @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
   .feedback{font-size:13px;color:var(--bad);background:var(--bad-bg);border-radius:12px;padding:9px 12px;animation:pop .2s}
@@ -193,13 +202,14 @@
   </div>
   <div class="row levels" id="levels">레벨
     <span class="spacer"></span>
-    <button class="chip" id="soundBtn" title="효과음">🔊</button>
+    <button class="chip" id="soundBtn" title="소리 켜기/끄기 (대사 자동 읽기 + 효과음)">🔊 소리</button>
     <button class="chip" id="koToggle" title="번역 항상 보기">번역</button>
   </div>
 </header>
 <div class="event" id="eventBar" hidden></div>
 <main id="feed"><div class="loading">대화문을 불러오는 중…</div></main>
 <div id="toasts"></div>
+<div id="soundHint">🔊 화면을 한 번 누르면 대사 소리가 나와요</div>
 <button id="updateBar">🔄 새 업데이트가 있어요 · 눌러서 적용</button>
 
 <div id="book">
@@ -357,8 +367,15 @@
   const applyKo = () => { document.body.classList.toggle("show-ko", showKo); koToggle.classList.toggle("on", showKo); };
   koToggle.onclick = () => { showKo = !showKo; store.set("ls.ko", showKo); applyKo(); };
   applyKo();
-  const applySound = () => { soundBtn.textContent = soundOn ? "🔊" : "🔇"; };
-  soundBtn.onclick = () => { soundOn = !soundOn; store.set("ls.sound", soundOn); applySound(); };
+  const applySound = () => {
+    soundBtn.textContent = soundOn ? "🔊 소리" : "🔇 소리";
+    soundBtn.classList.toggle("on", soundOn);
+    if (!soundOn){ stopSpeech(); soundHint.classList.remove("show"); }
+  };
+  soundBtn.onclick = () => {
+    soundOn = !soundOn; store.set("ls.sound", soundOn); applySound();
+    if (soundOn){ const st = slides[active]; if (st) replayLast(st); }   // 켜면 지금 카드의 마지막 대사를 바로 읽어 줌
+  };
   applySound();
 
   /* ---------- toast ---------- */
@@ -375,14 +392,52 @@
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const pickOne = a => a[Math.floor(Math.random() * a.length)];
   const sceneOf = c => c.k.replace(/_L\d$/, "");
-  function speak(text){
-    try {
-      if (!("speechSynthesis" in window)) return;
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-US"; u.rate = 0.95;
-      speechSynthesis.speak(u);
-    } catch(e){}
+  /* ---------- 음성 ----------
+     - 🔊 듣기 버튼: 소리 설정과 상관없이 언제나 읽어 줌
+     - 자동 읽기: 상단 🔊 소리가 켜져 있으면, 상대 대사가 화면에 나올 때 바로 읽어 줌
+       (지금 보고 있는 카드만 읽고, 미리 만들어 둔 다음 카드는 넘겨서 보일 때 읽음)
+     - 휴대폰 브라우저는 화면을 한 번이라도 눌러야 소리를 낼 수 있어서, 그 전에는 안내를 띄우고 기다림 */
+  const canSpeak = () => "speechSynthesis" in window;
+  const gestureOK = () => !navigator.userActivation || navigator.userActivation.hasBeenActive;
+  let waitingForTap = [];
+  function utter(text){
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  }
+  function stopSpeech(){ try { if (canSpeak()) speechSynthesis.cancel(); } catch(e){} }
+  function speak(text){                       // 버튼으로 듣기
+    try { if (!canSpeak()) return; speechSynthesis.cancel(); utter(text); } catch(e){}
+  }
+  function speakQueue(texts){                 // 자동 읽기 (앞 대사 뒤에 이어서)
+    if (!soundOn || !texts.length || !canSpeak()) return;
+    if (!gestureOK()){ waitingForTap.push(...texts); soundHint.classList.add("show"); return; }
+    try { texts.forEach(utter); } catch(e){}
+  }
+  function onFirstTap(){
+    if (!waitingForTap.length && !soundHint.classList.contains("show")) return;
+    soundHint.classList.remove("show");
+    const q = waitingForTap; waitingForTap = [];
+    if (soundOn) setTimeout(() => { try { q.forEach(utter); } catch(e){} }, 0);
+  }
+  ["pointerup", "keydown", "touchend"].forEach(ev => document.addEventListener(ev, onFirstTap, {capture: true}));
+
+  function autoSay(st, text){
+    if (!soundOn) return;
+    if (slides[active] === st && st.seen) speakQueue([text]);
+    else st.pending.push(text);
+  }
+  function onActivate(st){
+    stopSpeech(); waitingForTap = [];
+    if (!st) return;
+    const first = !st.seen;
+    st.seen = true;
+    const q = st.pending; st.pending = [];
+    if (first && soundOn) speakQueue(q);
+  }
+  function replayLast(st){
+    const last = [...st.chat.querySelectorAll(".msg.npc, .msg.center")].pop();
+    if (last && last.dataset.say) speakQueue([last.dataset.say]);
   }
 
   /* =====================================================================
@@ -448,7 +503,7 @@
         <div class="answer"></div>
         <div class="skip">밑으로 내리면 다른 대화로 넘어가요</div>
       </div>`;
-    return {item, el, wrong: 0, firstTryAll: true, finished: false, xp: 0,
+    return {item, el, wrong: 0, firstTryAll: true, finished: false, xp: 0, pending: [], seen: false,
       cardEl: el.querySelector(".card"), chat: el.querySelector(".chat"), answer: el.querySelector(".answer"),
       bar: el.querySelector(".progress i"), skip: el.querySelector(".skip"), comboEl: el.querySelector(".combo")};
   }
@@ -471,6 +526,7 @@
     if (kind.startsWith("you")) tools.style.justifyContent = "flex-end";
     st.chat.appendChild(m);
     scrollChat(st);
+    if (sayable && (kind === "npc" || kind === "center")){ m.dataset.say = en; autoSay(st, en); }
     return m;
   }
 
@@ -489,9 +545,22 @@
     st.answer.appendChild(hint);
     let fbEl = null, missed = false;
     shuffle(opts.slice()).forEach((o, i) => {
-      const b = document.createElement("button");
+      const b = document.createElement("div");
       b.className = "opt";
-      b.innerHTML = `<span class="n">${i + 1}</span><span>${esc(o.en)}${o.ko ? `<span class="oko">${esc(o.ko)}</span>` : ""}</span>`;
+      b.setAttribute("role", "button"); b.tabIndex = 0;
+      b.innerHTML = `<span class="n">${i + 1}</span><div class="otext">${esc(o.en)}${o.ko ? `<span class="oko">${esc(o.ko)}</span>` : ""}<div class="otools"></div></div>`;
+      const tools = b.querySelector(".otools");
+      if (o.say !== false){
+        const sb = document.createElement("button"); sb.className = "mini"; sb.textContent = "🔊 듣기";
+        sb.onclick = ev => { ev.stopPropagation(); speak(o.en); };
+        tools.appendChild(sb);
+      }
+      if (o.ko){
+        const tb = document.createElement("button"); tb.className = "mini"; tb.textContent = "번역";
+        tb.onclick = ev => { ev.stopPropagation(); b.classList.toggle("reveal"); };
+        tools.appendChild(tb);
+      }
+      if (!tools.children.length) tools.remove();
       b.onclick = () => {
         if (b.classList.contains("wrong") || st.finished) return;
         if (o.ok){
@@ -610,7 +679,7 @@
       const pool = EX.phone.flatMap(t => t.m).filter(m => m !== last && m[2]).map(m => m[2]);
       const wrongs = shuffle([...new Set(pool)]).slice(0, 2);
       renderOptions(st, `${last[0]}의 마지막 메시지는 무슨 뜻일까요?`, "",
-        [{en: last[2], ok: true}, ...wrongs.map(w => ({en: w, ok: false, fb: "다시 읽어 보세요."}))],
+        [{en: last[2], ok: true, say: false}, ...wrongs.map(w => ({en: w, ok: false, fb: "다시 읽어 보세요.", say: false}))],
         () => { addMsg(st, "", "👍 읽음", "", "you text", {sayable: false}); done(); });
     }
     return st;
@@ -747,7 +816,11 @@
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting && e.intersectionRatio > 0.6){
-        active = slides.findIndex(s => s.el === e.target);
+        const idx = slides.findIndex(s => s.el === e.target);
+        if (idx < 0) return;
+        const changed = idx !== active || !slides[idx].seen;
+        active = idx;
+        if (changed) onActivate(slides[idx]);
         while (slides.length - active < 3) append();
       }
     });
@@ -755,6 +828,7 @@
 
   function resetFeed(){
     slides.forEach(s => io.unobserve(s.el));
+    stopSpeech(); waitingForTap = [];
     slides.length = 0; feed.innerHTML = ""; deck = []; lastScene = null; active = 0;
     revengeQ.length = 0;
     if (!ALL.some(c => levels.has(c.l))){ feed.innerHTML = '<div class="empty">이 레벨에는 대화가 없어요.</div>'; return; }
